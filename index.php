@@ -1,9 +1,16 @@
 <?php
 // Database configuration
-$host = 'srv1022.hstgr.io';
-$username = 'u180778967_noviagent';
-$password = 'Novi@agent1';
-$database = 'u180778967_noviagent';
+require_once __DIR__ . '/vendor/autoload.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$host = $_ENV['DB_HOST'];
+$username = $_ENV['DB_USERNAME'];
+$password = $_ENV['DB_PASSWORD'];
+$database = $_ENV['DB_NAME'];
+
+$valid_api_key = $_ENV['API_KEY'];
 
 // Enable error reporting for debugging
 ini_set('display_errors', 1);

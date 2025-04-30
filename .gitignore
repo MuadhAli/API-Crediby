@@ -1,0 +1,20 @@
+# Ignore Composer dependencies
+/vendor/
+
+# Ignore environment config
+.env
+
+# Ignore Composer lock file (optional)
+composer.lock
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore logs and temp files (if any)
+*.log
+*.tmp
+
+# Ignore OS-generated folders
+.idea/
+.vscode/

@@ -10,14 +10,20 @@ header('Access-Control-Allow-Origin: *'); // Allow CORS for testing (restrict in
 
 
 
-// Database configuration
-$host = 'srv1022.hstgr.io';
-$username = 'u180778967_noviagent';
-$password = 'Novi@agent1';
-$database = 'u180778967_noviagent';
+// Load Composer's autoloader
+require_once __DIR__ . '/vendor/autoload.php';
 
-// API key for authentication
-$valid_api_key = 'a9c3b9e0f06e4376a1b82f15e86c2a3f4b7314c3c9b2ea834a0c8a9d68efcabe';
+// Load environment variables from .env file
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Database configuration from .env file
+$host = $_ENV['DB_HOST'];
+$username = $_ENV['DB_USERNAME'];
+$password = $_ENV['DB_PASSWORD'];
+$database = $_ENV['DB_NAME'];
+$valid_api_key = $_ENV['API_KEY'];
+
 
 // Check API key
 $headers = getallheaders();
