@@ -87,6 +87,159 @@ if ($request[0] === 'users') {
         echo json_encode(['error' => 'Method not allowed']);
     }
 
+// ROLES endpoint
+} elseif ($request[0] === 'roles') {
+    if ($method === 'GET') {
+        if (isset($_GET['email'])) {
+            $email = $_GET['email'];
+            $stmt = $conn->prepare("SELECT roles FROM users WHERE email = ?");
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                echo json_encode(['role' => $row['roles']]);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'User not found for provided email']);
+            }
+            $stmt->close();
+        } else {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing required parameter: email']);
+        }
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+// CASEMASTERASSIGNED endpoint
+} elseif (strpos($request[0], 'casemasterassigned=') === 0) {
+    if ($method === 'GET') {
+        // Extract email from endpoint string
+        $email = explode('=', $request[0])[1];
+
+        // Query case_master where Assigned_to matches the email
+        $stmt = $conn->prepare("SELECT id, case_number, created_on, duplicate_check, grn_check, order_type, other_keys, po_check, priority, region_code, status, updated_on, userid, vendor_check, work_flow_status, Assigned_to FROM case_master WHERE Assigned_to = ?");
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $cases = [];
+        while ($row = $result->fetch_assoc()) {
+            $cases[] = $row;
+        }
+
+        if (count($cases) > 0) {
+            echo json_encode($cases);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No cases found for this email']);
+        }
+
+        $stmt->close();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+// CASE_ID endpoint for case_diary lookup
+} elseif (strpos($request[0], 'case_id=') === 0) {
+    if ($method === 'GET') {
+        // Extract case_id from endpoint
+        $case_id = intval(explode('=', $request[0])[1]);
+
+        // Query the case_diary table
+        $stmt = $conn->prepare("SELECT id, comment, flag_code, flag_level, case_id, approved_by FROM case_diary WHERE case_id = ?");
+        $stmt->bind_param('i', $case_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $entries = [];
+        while ($row = $result->fetch_assoc()) {
+            $entries[] = $row;
+        }
+
+        if (count($entries) > 0) {
+            echo json_encode($entries);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No records found for the provided case_id']);
+        }
+
+        $stmt->close();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+// INVOICEID endpoint for fetching invoice details by case_id
+} elseif (strpos($request[0], 'invoiceid=') === 0) {
+    if ($method === 'GET') {
+        // Extract case_id from endpoint
+        $case_id = intval(explode('=', $request[0])[1]);
+
+        // Query the invoice_details table
+        $stmt = $conn->prepare("SELECT 
+            inv_id, bill_to_party, bill_to_party_address, branch, case_id, company_code,
+            gross_amount, total_amount, vendor_name, vendor_address, vendor_bank_acc_no,
+            vendor_bank_address, vendor_bank_name, vendor_id, vendor_postal_code, vendor_state
+            FROM invoice WHERE inv_id = ?");
+        $stmt->bind_param('i', $case_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $invoices = [];
+        while ($row = $result->fetch_assoc()) {
+            $invoices[] = $row;
+        }
+
+        if (count($invoices) > 0) {
+            echo json_encode($invoices);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No invoice found for the provided case_id']);
+        }
+
+        $stmt->close();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+// INVLINE_ITEM endpoint for fetching line items by inv_id
+} elseif (strpos($request[0], 'invline_item=') === 0) {
+    if ($method === 'GET') {
+        // Extract inv_id from endpoint
+        $inv_id = intval(explode('=', $request[0])[1]);
+
+        // Query the table (replace 'invoice_line_items' with actual table name if different)
+        $stmt = $conn->prepare("SELECT 
+            id, inv_id, description, gross_amount, name, quantity, total_amount, unit_price 
+            FROM invoice_line_item WHERE inv_id = ?");
+        $stmt->bind_param('i', $inv_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $line_items = [];
+        while ($row = $result->fetch_assoc()) {
+            $line_items[] = $row;
+        }
+
+        if (count($line_items) > 0) {
+            echo json_encode($line_items);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No line items found for the provided inv_id']);
+        }
+
+        $stmt->close();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+
 // VENDOR endpoint
 } elseif ($request[0] === 'vendors') {
     if ($method === 'GET') {
