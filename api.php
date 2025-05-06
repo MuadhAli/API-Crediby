@@ -266,7 +266,112 @@ if ($request[0] === 'users') {
     }
 
 
+} elseif (strpos($request[0], 'apstudiocases=') === 0) {
+    if ($method === 'GET') {
+        // Extract case_number from endpoint
+        $case_number = explode('=', $request[0])[1];
 
+        // Prepare SQL query
+        $stmt = $conn->prepare("
+            SELECT 
+                cm.id AS case_id,
+                cm.case_number,
+                cm.created_on,
+                cm.duplicate_check,
+                cm.grn_check,
+                cm.order_type,
+                cm.other_keys,
+                cm.po_check,
+                cm.priority AS cm_priority,
+                cm.region_code AS cm_region_code,
+                cm.status,
+                cm.updated_on,
+                cm.userid,
+                cm.vendor_check,
+                cm.work_flow_status,
+                cm.Assigned_to,
+
+                cd.id AS diary_id,
+                cd.comment,
+                cd.flag_code,
+                cd.flag_level,
+                cd.case_id AS diary_case_id,
+                cd.approved_by,
+
+                vd.id AS vendor_id,
+                vd.caseNumber,
+                vd.invoicefilename,
+                vd.createdOn AS vendor_createdOn,
+                vd.updatedOn AS vendor_updatedOn,
+                vd.`case status`,
+                vd.priority AS vendor_priority,
+                vd.region_code AS vendor_region_code,
+                vd.workFlowStatus,
+                vd.vendor_name,
+                vd.vendor_address,
+                vd.vendor_id AS vendor_internal_id,
+
+                i.inv_id,
+                i.bill_to_party,
+                i.bill_to_party_address,
+                i.branch,
+                i.case_id AS invoice_case_id,
+                i.company_code,
+                i.gross_amount AS invoice_gross_amount,
+                i.total_amount AS invoice_total_amount,
+                i.vendor_name AS invoice_vendor_name,
+                i.vendor_address,
+                i.vendor_bank_acc_no,
+                i.vendor_bank_address,
+                i.vendor_bank_name,
+                i.vendor_id AS invoice_vendor_id,
+                i.vendor_postal_code,
+                i.vendor_state,
+
+                ili.id AS line_item_id,
+                ili.inv_id AS line_item_inv_id,
+                ili.description,
+                ili.gross_amount AS line_item_gross_amount,
+                ili.name,
+                ili.quantity,
+                ili.total_amount AS line_item_total_amount,
+                ili.unit_price
+
+            FROM 
+                case_master cm
+            LEFT JOIN case_diary cd ON cd.case_id = cm.id
+            LEFT JOIN VendorDetails vd ON vd.caseNumber = cm.case_number
+            LEFT JOIN invoice i ON i.case_id = cm.id
+            LEFT JOIN invoice_line_item ili ON ili.inv_id = i.inv_id
+
+            WHERE cm.case_number = ?
+        ");
+
+        $stmt->bind_param('s', $case_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $cases = [];
+        while ($row = $result->fetch_assoc()) {
+            $cases[] = $row;
+        }
+
+        if (count($cases) > 0) {
+            echo json_encode($cases);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No case found for the provided case_number']);
+        }
+
+        $stmt->close();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+
+
+    
 // VENDOR endpoint
 } elseif ($request[0] === 'vendors') {
     if ($method === 'GET') {
