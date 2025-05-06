@@ -239,6 +239,33 @@ if ($request[0] === 'users') {
         echo json_encode(['error' => 'Method not allowed']);
     }
 
+    // ALLCASEMASTER endpoint to fetch all records from case_master table
+} elseif ($request[0] === 'allcasemaster') {
+    if ($method === 'GET') {
+        $query = "SELECT 
+            id, case_number, created_on, duplicate_check, grn_check, order_type, other_keys, 
+            po_check, priority, region_code, status, updated_on, userid, 
+            vendor_check, work_flow_status, Assigned_to 
+            FROM case_master";
+
+        $result = $conn->query($query);
+
+        if ($result && $result->num_rows > 0) {
+            $cases = [];
+            while ($row = $result->fetch_assoc()) {
+                $cases[] = $row;
+            }
+            echo json_encode($cases);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'No case master records found']);
+        }
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+
 
 // VENDOR endpoint
 } elseif ($request[0] === 'vendors') {
