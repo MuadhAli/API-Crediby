@@ -371,6 +371,48 @@ if ($request[0] === 'users') {
 
 
 
+} elseif ($request[0] === 'update_case') {
+    if ($method === 'POST') {
+        // Read input JSON body
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        // Validate input
+        if (!isset($input['case_number'], $input['work_flow_status'], $input['Assigned_to'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing required fields: case_number, work_flow_status, Assigned_to']);
+            exit;
+        }
+
+        $case_number = $input['case_number'];
+        $work_flow_status = $input['work_flow_status'];
+        $assigned_to = $input['Assigned_to'];
+
+        // Prepare update query
+        $stmt = $conn->prepare("UPDATE case_master 
+                                SET work_flow_status = ?, Assigned_to = ?
+                                WHERE case_number = ?");
+        $stmt->bind_param('sss', $work_flow_status, $assigned_to, $case_number);
+
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                echo json_encode(['success' => 'Case updated successfully']);
+            } else {
+                http_response_code(404);
+                echo json_encode(['error' => 'No case found with the provided case_number']);
+            }
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Database error']);
+        }
+
+        $stmt->close();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+
+
+
     
 // VENDOR endpoint
 } elseif ($request[0] === 'vendors') {
